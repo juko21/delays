@@ -1,49 +1,65 @@
 
 import config from "../config/config.json";
+import storage from "./storage";
+import auth from "./auth";
+import Station from "../interfaces/station.ts";
 
-const trafficData = {
-    getStations: async function getStations() {
-        console.log("HEJ");
-        const response = await fetch(`https://trafik.emilfolino.se/stations`);
+const favourites = {
+    getFavourites: async function getFavourites() {
+        if(!auth.loggedIn()) {
+            return -1;
+        }
+        const token = await storage.readToken();
+        const response = await fetch(`${config.auth_url}/data?api_key=${config.api_key}`, {
+            method: "GET",
+            headers: {
+                'content-type': 'application/json',
+                'x-access-token': token.token
+            },
+        });
         const result = await response.json();
-
-        return result.data;
+        const data = result.data.map((elem, index) => { return {artefact: JSON.parse(elem.artefact), id: elem.id, email: elem.email}});
+        return data;
     },
-    getDelays: async function getDelays() {
-        const response = await fetch(`${config.base_url}/delayed`);
-        const result = await response.json();
 
-        return result.data;
-    }
+    addFavourite: async function addFavourite(station) {
+        //let favourites = this.getFavourites();
+        //favourites.push(station);
+        const token = await storage.readToken();
+        var data = {
+            artefact: JSON.stringify(station),
+            api_key: config.api_key
+        };
+        data = JSON.stringify(data);
+        const response = await fetch(`https://auth.emilfolino.se/data`, {
+            method: 'POST',
+            headers: {  
+                'Accept': 'application/json',
+                'content-type': 'application/json',
+                'x-access-token': token.token
+            },
+            body: data,
+        });
+        const result = await response.json();
+    },
+
+    removeFavourite: async function removeFavourite(id) {
+        const token = await storage.readToken();
+        var data = {
+            id: id,
+            api_key: config.api_key
+        };
+        data = JSON.stringify(data);
+        const response = await fetch(`https://auth.emilfolino.se/data`, {
+            method: 'DELETE',
+            headers: {  
+                'Accept': 'application/json',
+                'content-type': 'application/json',
+                'x-access-token': token.token
+            },
+            body: data,
+        });
+    },
 };
 
-export default trafficData;
-
-/*
-const traffic = {
-    getStations: async function getStations() {
-        const response = await fetch(`${config.base_url}/stations`);
-        const result = await response.json();
-
-        return result.data;
-    },
-    getMessages: async function getMessages() {
-        const response = await fetch(`${config.base_url}/messages`);
-        const result = await response.json();
-
-        return result.data;
-    },
-    getCodes: async function getCodes() {
-        const response = await fetch(`${config.base_url}/const`);
-        const result = await response.json();
-
-        return result.data;
-    },
-    getDelays: async function getDelays() {
-        const response = await fetch(`${config.base_url}/delayed`);
-        const result = await response.json();
-
-        return result.data;
-    }
-};
-*/
+export default favourites;

@@ -20,9 +20,18 @@ export const delayListContainer = {
     borderBottomColor: '#ccc',
     borderBottomWidth: 1
 }
-export const delayList = {
-    padding: 10,
+
+export const delayListCell = {
+    paddingTop: 10,
+    paddingBottom: 10,
     fontSize: 18,
+    width: "100%",
+    
+}
+
+export const delayListHeader = {
+    padding: 10,
+    backgroundColor: "#ccc",
     width: "100%",
 }
 

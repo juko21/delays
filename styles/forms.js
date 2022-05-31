@@ -85,11 +85,20 @@ export const buttonText = {
     top: 12,
     textAlign: 'center',
 }
+
 export const star = {
     fontSize: 20,
     lineHeight: 20,
     top: 5,
     color: "white",
+    textAlign: 'center',
+}
+
+export const starYellow = {
+    fontSize: 20,
+    lineHeight: 20,
+    top: 5,
+    color: "yellow",
     textAlign: 'center',
 }
 

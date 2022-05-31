@@ -29,7 +29,6 @@ export default function Home({ route, navigation, currentGPSLocation, setCurrent
     const mapRef = useRef(null);
 
     function fitMarker() {
-        console.log(currentLocation);
         if (currentLocation){
             setTimeout(() => {
                 mapRef.current.animateToRegion({...currentLocation.coords, latitudeDelta: 0.01, longitudeDelta: 0.01}, 3000)
@@ -104,7 +103,7 @@ export default function Home({ route, navigation, currentGPSLocation, setCurrent
         }
         const curLoc = {coords: strToCoords(stationMatch.Geometry.WGS84)};
         if (!searchMarker) {
-            searchMarker = (
+            searchMarker = (    
             <Marker
                 identifier='mp'
                 coordinate={{
@@ -113,7 +112,7 @@ export default function Home({ route, navigation, currentGPSLocation, setCurrent
                 }}
                 pinColor="#0B924E"
             >
-                <Callout>
+                <Callout onPress={()=>{goToScreen(stationMatch)}}>
                     <View style={{alignSelf: 'center', maxHeight: 300, padding: 12}}>
                         <Text>{stationMatch.AdvertisedLocationName + "\nInga förseningar"}</Text>
                     </View>
@@ -121,12 +120,17 @@ export default function Home({ route, navigation, currentGPSLocation, setCurrent
             </Marker> 
             );
         }
-        console.log(curLoc);
         setCurrentLocation(curLoc);
         setLocationMarker(searchMarker);
         setSelectedStation(null);
     }
 
+    function goToScreen(station) {
+        navigation.navigate('Sök', {
+            screen: 'Search',
+            params: { passedStation: station }
+        });
+    }
     async function findDelays() {
         const listOfDelayStations = stations
         .filter((station) => {
@@ -158,7 +162,7 @@ export default function Home({ route, navigation, currentGPSLocation, setCurrent
                 title={delayTitle}
                 pinColor="red"
                 >
-                <Callout>
+                <Callout onPress={()=>{goToScreen(station)}}>
                     <View style={{alignSelf: 'center', maxHeight: 300, padding: 12}}>
                         <Text>{delayTitle}</Text>
                     </View>
@@ -188,7 +192,6 @@ export default function Home({ route, navigation, currentGPSLocation, setCurrent
 
     useEffect(() => {
         (async () => {
-            console.log("Hej");
             fitMarker();
         })();
     }, [currentLocation]);

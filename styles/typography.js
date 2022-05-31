@@ -24,6 +24,10 @@ export const header2 = {
     marginBottom: 4
 }
 
+export const delayListheader = {
+    fontSize: 22,
+    fontFamily: 'Lato_700Bold',
+}
 export const invHeader = {
     flex: 1,
     backgroundColor: '#ddd',
