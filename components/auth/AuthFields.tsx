@@ -1,43 +1,55 @@
 // auth/AuthFields.tsx
-import { View, Text, TextInput, Button } from "react-native";
-import { Typography, Forms, Base } from '../../styles';
+import { View, Text, TextInput, Button, Pressable } from "react-native";
+import { Typography, Forms, Base, AuthStyle } from '../../styles';
+import { Ionicons } from '@expo/vector-icons';
+import Header from "../Header.tsx";
 
 export default function AuthFields({ auth, setAuth, title, submit, navigation}) {
     return (
-        <View style={Base.base}>
-            <Text style={Typography.header2}>{title}</Text>
-            <Text style={Typography.label}>E-post</Text>
-            <TextInput
-                style={Forms.authInput}
-                onChangeText={(content: string) => {
-                    setAuth({ ...auth, email: content })
-                }}
-                value={auth?.email}
-                keyboardType="email-address"
-            />
-            <Text style={Typography.label}>Lösenord</Text>
-            <TextInput
-                style={Forms.authInput}
-                onChangeText={(content: string) => {
-                    setAuth({ ...auth, password: content })
-                }}
-                value={auth?.password}
-                secureTextEntry={true}
-            />
-            <Button
+        <View style={{ display: "flex" }}>
+            <Header
                 title={title}
-                onPress={() => {
-                    submit();
-                }}
+                navigation={navigation}
             />
-            {title === "Logga in" &&
-                <Button
-                    title="Registrera användare"
-                    onPress={() => {
-                        navigation.navigate("Register");
+            <View style={AuthStyle.container}>
+                <TextInput
+                    style={AuthStyle.input}
+                    placeholder="Epost"
+                    onChangeText={(content: string) => {
+                        setAuth({ ...auth, email: content })
                     }}
+                    value={auth?.email}
+                    keyboardType="email-address"
                 />
-            }
+                <TextInput
+                    style={AuthStyle.input}
+                    placeholder="Lösenord"
+                    onChangeText={(content: string) => {
+                        setAuth({ ...auth, password: content })
+                    }}
+                    value={auth?.password}
+                    secureTextEntry={true}
+                />
+                <Pressable
+                    style={AuthStyle.pressable}
+                    title={title}
+                    onPress={() => {
+                        submit();
+                    }}
+                >
+                    <Text style={AuthStyle.pressableText}>Logga in</Text>
+                </Pressable>
+                {title === "Logga in" &&
+                    <Pressable
+                        style={AuthStyle.pressable}
+                        onPress={() => {
+                            navigation.navigate("Register");
+                        }}
+                    >
+                        <Text style={AuthStyle.pressableText}>Registrera användare</Text>
+                    </Pressable>
+                }
+            </View>
         </View>
     );
 };

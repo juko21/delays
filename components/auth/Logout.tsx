@@ -1,7 +1,9 @@
 // auth/Auth.tsx
 
 import authModel from '../../models/auth.ts';
-import { View, Button } from "react-native";
+import { Text, View, Pressable } from "react-native";
+import Header from '../Header.tsx';
+import { AuthStyle} from '../../styles/index.js'
 
 export default function Logout( props ) {
 
@@ -11,8 +13,19 @@ export default function Logout( props ) {
     }
 
     return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Button title="Logga ut" onPress={() => logout()} />
+        <View>
+            <Header
+                title="Logga ut"
+                navigation={props.navigation}
+            />
+            <View style={AuthStyle.container}>
+                <Pressable
+                    style={AuthStyle.pressable}
+                    onPress={() => logout()} 
+                >
+                    <Text style={AuthStyle.pressableText}>Logga ut</Text>
+                </Pressable>
+            </View>
         </View>
     );
 };

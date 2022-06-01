@@ -1,34 +1,107 @@
 // Pick.tsx
 import { useState, useEffect, useRef } from 'react';
+import { useIsFocused } from '@react-navigation/native';
 import { View, ScrollView, StyleSheet, TextInput, Pressable, Text, FlatList, TouchableOpacity} from 'react-native';
 import MapView from 'react-native-maps';
 import { Marker, Callout } from "react-native-maps";
 import * as Location from 'expo-location';
 import TrafficModel from '../models/traffic.ts';
 import distanceBetweenCoordinates from '../models/distance';
-import { Forms, MapStyle } from '../styles/index.js';
+import { Base, Typography, Forms, MapStyle } from '../styles/index.js';
 import getCoordinates from "../models/nominatim";
 import strToCoords from '../models/stringToCoordinate.ts';
 import { showMessage } from "react-native-flash-message";
 import { Ionicons } from '@expo/vector-icons';
-
+import DoubleHeader from './DoubleHeader.tsx';
+import FavouriteModel from '../models/favourites.ts';
 let firstRender = true;
 
-export default function Home({ route, navigation, currentGPSLocation, setCurrentGPSLocation }) {
+export default function Map({
+    route,
+    navigation,
+    isLoggedIn,
+    stations, setStations,
+    favourites, setFavourites,
+    delays, setDelays 
+}) {
     const [currentLocation, setCurrentLocation] = useState(null);
     const [locationMarker, setLocationMarker] = useState(null);
     const [searchLocation, setSearchLocation] =  useState(null);
-    const [errorMessage, setErrorMessage] = useState(null);
-    const [stations, setStations] = useState(null);
-    const [delays, setDelays] = useState(null);
     const [selectedStation, setSelectedStation] = useState(null);
-    const [delayedStations, setDelayedStations] = useState(null);
+    const [currentStation, setCurrentStation] = useState(null);
+    const [addToFavoritesButton, setAddToFavoritesButton] = useState(null);
     const [delayMarkers, setDelayMarkers] = useState(null);
     const [matches, setMatches] = useState(null);
     const inputRef = useRef(null);
     const mapRef = useRef(null);
+    const isFocused = useIsFocused();
 
-    function fitMarker() {
+    //Runs once - fetches stations, delays and if logged in
+    //favourites and sets to respective state.
+    useEffect(() => {
+        (async () => {
+                const stationsList = await TrafficModel.getStations();
+                const delaysList = await TrafficModel.getDelays();
+                const status = await setCurrentLocationToUser();
+                setStations(stationsList);
+                setDelays(delaysList)
+                if(isLoggedIn) {
+                    const favs = await FavouriteModel.getFavourites();
+                    setFavourites(favs);
+                }
+        })();
+    }, []);
+
+    // If in focus, refetch delays and favourites
+    useEffect(() => {
+        (async () => {
+            reloadDelays();
+            reloadFavourites();
+        })()
+    }, [isFocused]);
+    
+    // If delays/stations are set and/or changed
+    // Fetch delays and set markers
+    useEffect(() => {
+        (async () => {
+            if(stations && delays) {
+                findDelays();
+            }
+        })();
+    }, [stations, delays]);
+
+    // If current location is updated - go to location
+    // Be it searched station or user location
+    useEffect(() => {
+        (async () => {
+            goToMarker();
+        })();
+    }, [currentLocation]);
+
+    // If currentStation is chosen/changed and delays or favourites are
+    // updated update favorite toggle-button to reflect possible change
+    useEffect(() => {
+        (async () => {
+            if(currentStation && isLoggedIn) {
+                const inFavourites = favourites.length === 0 ? [] : favourites.filter(station => { return station.artefact.LocationSignature === currentStation.LocationSignature; });
+                setAddToFavoritesButton(
+                    <Pressable
+                    style={Typography.pressable}
+                    onPress={() => {
+                        changeFavorites((inFavourites.length !== 0), inFavourites.length !== 0 ? inFavourites[0].id : currentStation);
+                    }}
+                    >
+                    <Ionicons 
+                        style={Typography.headerIcons}
+                        name={inFavourites.length !== 0 ? "star" : "star-outline"}/>
+                </Pressable>
+                );
+            }
+        })();
+    }, [currentStation, delays, favourites] );
+
+    // Animate region to marker (current location) coords
+    function goToMarker() {
         if (currentLocation){
             setTimeout(() => {
                 mapRef.current.animateToRegion({...currentLocation.coords, latitudeDelta: 0.01, longitudeDelta: 0.01}, 3000)
@@ -36,6 +109,8 @@ export default function Home({ route, navigation, currentGPSLocation, setCurrent
         }
     }
 
+    // get matches for stations if stations and delays loaded,
+    // shown as autocomplete list when searching
     async function getMatches(searchString, set = false) {
         if(stations && delays) {
             const stationMatches = stations.filter((station) => { return station.AdvertisedLocationName.includes(searchString)})
@@ -43,6 +118,9 @@ export default function Home({ route, navigation, currentGPSLocation, setCurrent
         }
     }
 
+    // If station is selected from drop down auto-complete,
+    // set input search string to station and set state of selected station.
+    // Also empty matches (auto-complete list)
     async function onStationSelected(station) {
         setSearchLocation(station.AdvertisedLocationName);
         inputRef.current.setNativeProps({ text: station.AdvertisedLocationName })
@@ -50,11 +128,39 @@ export default function Home({ route, navigation, currentGPSLocation, setCurrent
         setMatches([]);
     }
 
+    // Reload favourites and set state
+    async function reloadFavourites() {
+        if(isLoggedIn) {
+            const listOfFavourites = await FavouriteModel.getFavourites();
+            setFavourites(listOfFavourites);
+        }
+    }
+
+    // Reload delays and set state
+    async function reloadDelays() {
+        const dels = await TrafficModel.getDelays();
+        setDelays(dels);
+    }
+
+    // Reload and set state of delays and favourites
+    async function reload() {
+        reloadDelays();
+        reloadFavourites();
+    }
+
+    // Set current location and marker to user
+    // Marker uses callout box for displaying info.
+    // Callout box is pressable and will send to search-station route,
+    // showing delays for a single searched station
     async function setCurrentLocationToUser() {
         const { status } = await Location.requestForegroundPermissionsAsync();
     
         if (status !== 'granted') {
-            setErrorMessage('Permission to access location was denied');
+            showMessage({
+                message: "GPS-lokalisering",
+                description: "Tillstånd till lokalisering nekades.",
+                type: "warning",
+            });
             return;
         }
 
@@ -71,7 +177,7 @@ export default function Home({ route, navigation, currentGPSLocation, setCurrent
             pinColor="#0B924E"
         >
             <Callout>
-                <View style={{alignSelf: 'center', padding: 12}}>
+                <View style={Base.calloutStyle}>
                     <Text>Min plats</Text>
                 </View>
             </Callout>
@@ -79,8 +185,22 @@ export default function Home({ route, navigation, currentGPSLocation, setCurrent
         );
     }
 
+    // Change favourites, data takes either a station object if added (and not in favourites yet)
+    // or an id for removal (if in favourites)
+    async function changeFavorites(inFavourites, data) {
+        const result = !inFavourites ? await FavouriteModel.addFavourite(data) : await FavouriteModel.removeFavourite(data);
+        reloadFavourites();
+    }
+
+    // Go to searched station, called on input submit
+    // If delays are found for station, user is sent to corresponding 
+    // delay marker, if not, new marker is created and navigated to.
+    // Callouts for markers are pressable and navigate to station-details page.
     async function goToSearch() {
         let stationMatch = selectedStation;
+
+        // If no selected station, do a partial search on stations and select
+        // 1st result
         if(!selectedStation) {
             stationMatch = stations.filter((station) => { return station.AdvertisedLocationName.includes(searchLocation)})[0];
             setMatches([]);
@@ -89,6 +209,7 @@ export default function Home({ route, navigation, currentGPSLocation, setCurrent
                 setSearchLocation(stationMatch.AdvertisedLocationName);
             }
         }
+        // if no matches, show flash message
         if (!stationMatch) {
             showMessage({
                 message: "Sökresultat",
@@ -98,10 +219,15 @@ export default function Home({ route, navigation, currentGPSLocation, setCurrent
             return;
         }
         let searchMarker = null;
+
+        // if delaymarkers are set, check against them and set temp marker to result
         if(delayMarkers) {
             searchMarker = delayMarkers.filter(delayMarker => { return delayMarker.key === stationMatch.LocationSignature})[0];
         }
         const curLoc = {coords: strToCoords(stationMatch.Geometry.WGS84)};
+
+        // if searchmarker is not yet set, it means station exists but has no delay,
+        // create corresponding marker with callout and set state
         if (!searchMarker) {
             searchMarker = (    
             <Marker
@@ -113,127 +239,97 @@ export default function Home({ route, navigation, currentGPSLocation, setCurrent
                 pinColor="#0B924E"
             >
                 <Callout onPress={()=>{goToScreen(stationMatch)}}>
-                    <View style={{alignSelf: 'center', maxHeight: 300, padding: 12}}>
-                        <Text>{stationMatch.AdvertisedLocationName + "\nInga förseningar"}</Text>
+                    <View style={Base.calloutStyle}>
+                        <Text style={Typography.calloutHeaderStyle}>{stationMatch.AdvertisedLocationName}</Text>
+                        <Text style={Typography.calloutTextStyle}>{"\nInga förseningar"}</Text>
                     </View>
                 </Callout>
             </Marker> 
             );
         }
+
+        //set states
         setCurrentLocation(curLoc);
+        setCurrentStation(stationMatch);
         setLocationMarker(searchMarker);
         setSelectedStation(null);
     }
 
+    // Go to station-details page
     function goToScreen(station) {
-        navigation.navigate('Sök', {
+        navigation.navigate('Sök station', {
             screen: 'Search',
             params: { passedStation: station }
         });
     }
+
+    // Find delay markers, called when delays/stations are loaded and/or changed.
     async function findDelays() {
+        // filter delayed stations
         const listOfDelayStations = stations
         .filter((station) => {
             return delays.some((delay) => {
               return (delay.FromLocation ? delay.FromLocation[0].LocationName : null) === station.LocationSignature;
             });
           });
-        setDelayedStations(listOfDelayStations);
+
+        // Create markers for delayed stations with a array-map call.
         const delayedStationMarkers = listOfDelayStations
             .map((station, index) => {
                 const curDelay = delays
                     .filter((delay) => { return (delay.FromLocation ? delay.FromLocation[0].LocationName : null) === station.LocationSignature; });
-                let delayTitle = station.AdvertisedLocationName;
+                let calloutContent = "";
+                // Loop through delays for stations and add to content var.
                 curDelay.forEach(delay => {
-                    let adTime = new Date(delay.AdvertisedTimeAtLocation);
-                    adTime = adTime.getFullYear() + "/" + adTime.getMonth() + "/" + adTime.getDate() + " " + adTime.getHours() + ":" + String(adTime.getMinutes()).padStart(2, "0");
-                    let estTime = new Date(delay.EstimatedTimeAtLocation);
-                    estTime = estTime.getFullYear() + "/" + estTime.getMonth() + "/" + estTime.getDate() + " " + estTime.getHours() + ":" + String(estTime.getMinutes()).padStart(2, "0");
-                    const options = { year: 'numeric', month: 'long', day: 'numeric', hour:'2-digit', minute: '2-digit' };
+                    const formattedDates = formatDates(
+                        delay.AdvertisedTimeAtLocation,
+                        delay.EstimatedTimeAtLocation
+                    ); 
+                    // Filter out arrival station
                     const arrival = stations.filter((stationInner) => { return (delay.ToLocation ? delay.ToLocation[0].LocationName : null) === stationInner.LocationSignature;});
-                    delayTitle += "\nTåg från " + station.AdvertisedLocationName + " till " + arrival[0].AdvertisedLocationName + "\nAvgång kl: " + adTime.toLocaleString('sv-SE', options) + "\nNy beräknad avgångstid: " + estTime.toLocaleString('sv-SE', options) +"\n\n";
+                    
+                    // Set content for callout
+                    calloutContent += "\nTåg till " + arrival[0].AdvertisedLocationName;
+                    calloutContent += "\nAvgång kl: " + adTime.toLocaleString('sv-SE', options);
+                    calloutContent += "\nNy beräknad avgångstid: " + estTime.toLocaleString('sv-SE', options) +"\n";
                 });
+                // Create marker for cur. station
                 return <Marker
-                coordinate={{
-                    latitude: strToCoords(station.Geometry.WGS84).latitude,
-                    longitude: strToCoords(station.Geometry.WGS84).longitude
-                }}
-                key={station.LocationSignature}
-                title={delayTitle}
-                pinColor="red"
-                >
-                <Callout onPress={()=>{goToScreen(station)}}>
-                    <View style={{alignSelf: 'center', maxHeight: 300, padding: 12}}>
-                        <Text>{delayTitle}</Text>
-                    </View>
-                </Callout>
-                </Marker>; 
-        });
+                    coordinate={{
+                        latitude: strToCoords(station.Geometry.WGS84).latitude,
+                        longitude: strToCoords(station.Geometry.WGS84).longitude
+                    }}
+                    key={station.LocationSignature}
+                    title={station.AdvertisedLocationName}
+                    pinColor="red"
+                    >
+                        <Callout onPress={()=>{goToScreen(station)}}>
+                            <View style={Base.calloutStyle}>
+                                <Text>{station.AdvertisedLocationName}</Text>
+                                <Text>{calloutContent}</Text>
+                            </View>
+                        </Callout>
+                    </Marker>; 
+            });
+        // set markers to state
         setDelayMarkers(delayedStationMarkers);
     }
 
-    useEffect(() => {
-        (async () => {
-                const stationsList = await TrafficModel.getStations();
-                const delaysList = await TrafficModel.getDelays();
-                const status = await setCurrentLocationToUser();
-                setStations(stationsList);
-                setDelays(delaysList)
-        })();
-    }, []);
-
-    useEffect(() => {
-        (async () => {
-            if(stations && delays) {
-                findDelays();
-            }
-        })();
-    }, [stations, delays]);
-
-    useEffect(() => {
-        (async () => {
-            fitMarker();
-        })();
-    }, [currentLocation]);
-
+    // Return mapview, header is created with DoubleHeader component
     return (
         <View style={MapStyle.container}>
-            <View style={Forms.sidebyButtonSearch}>
-                <TextInput
-                    ref={inputRef}
-                    style={{ ...Forms.input }}
-                    onChangeText={(content: string) => {
-                        setSearchLocation(content);
-                        getMatches(content, true);
-                    }}
-                />
-                <Pressable
-                    style={({ pressed }) => [
-                        {
-                          backgroundColor: pressed ? '#F15B5B' : '#EE2A2A',
-                        },
-                        Forms.pressable,
-                      ]}
-                    onPress={() => {
-                        goToSearch();
-                    }}
-                >
-                    <Ionicons style={Forms.buttonText} name="search-outline"/>
-                </Pressable>
-                <Pressable
-                    style={({ pressed }) => [
-                        {
-                          backgroundColor: pressed ? '#F15B5B' : '#EE2A2A',
-                        },
-                        Forms.pressable,
-                      ]}
-                    onPress={() => {
-                        setCurrentLocationToUser();
-                    }}
-                >
-                    <Ionicons style={Forms.buttonText} name="locate-outline"/>
-                </Pressable>
-            </View>
+            <DoubleHeader
+                title="Sök på karta"
+                search={goToSearch}
+                reload={reload}
+                inputRef={inputRef}
+                favoriteButton={addToFavoritesButton}
+                textChange={(content) => {
+                    setSearchLocation(content);
+                    getMatches(content, true);
+                }}
+                navigation={navigation}
+            />
             <MapView
                 ref={mapRef}
                 style={MapStyle.map}

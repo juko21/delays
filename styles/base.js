@@ -1,4 +1,3 @@
-
 export const container = {
     flex: 1,
 }
@@ -40,3 +39,36 @@ export const paddedContainer = {
     padding: 10,
     height: "100%",
 }
+
+export const headerRow = {
+    flex: 0,
+    width: "100%",
+    backgroundColor: "#BD3734",
+    height: 60,
+}
+
+export const headerRow2nd = {
+    width: "100%",
+    backgroundColor: "#BD3734",
+    padding: 16,
+    paddingTop: 0,
+}
+
+export const headerInput = {
+    fontSize: 20,
+    borderBottomWidth: 2, 
+    borderColor: "#96302B",
+    color: "#ffffff"
+}
+
+export const header= {
+    display: "flex",
+    width: "100%",
+    backgroundColor: "#BD3734",
+}
+
+export const calloutStyle = {
+    alignSelf: 'center',
+    padding: 14,
+}
+

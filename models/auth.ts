@@ -17,7 +17,6 @@ const auth = {
             email: email,
             password: password,
         };
-        console.log(config.api_key);
         const response = await fetch(`https://auth.emilfolino.se/login`, {
             method: "POST",
             body: JSON.stringify(data),

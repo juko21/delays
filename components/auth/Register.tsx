@@ -5,9 +5,12 @@ import authModel from '../../models/auth.ts';
 import AuthFields from './AuthFields.tsx';
 import { showMessage } from "react-native-flash-message";
 
+// Register screen component
 export default function Register({ navigation }) {
     const [auth, setAuth] = useState<Partial<Auth>>({});
 
+    // Try registering, if successful show success msg,
+    // if a field is missing, show flash message.
     async function registerUser() {
         if (auth.email && auth.password) {
             const result = await authModel.register(auth.email, auth.password);

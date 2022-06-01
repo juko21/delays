@@ -1,93 +1,86 @@
-export const header = {
-    fontSize: 32,
-    textAlign: 'center',
-    color: '#fff',
-    fontFamily: 'Lato_700Bold',
-    lineHeight: 36,
-    backgroundColor: '#777',
-    padding: 10,
-    paddingTop: 20,
-    paddingBottom: 20,
-    marginBottom: 4
-}
-
-export const header2 = {
-    fontSize: 24,
-    textAlign: 'center',
-    color: '#fff',
-    fontFamily: 'Lato_700Bold',
-    lineHeight: 36,
-    backgroundColor: '#777',
-    padding: 10,
-    paddingTop: 20,
-    paddingBottom: 20,
-    marginBottom: 4
-}
-
-export const delayListheader = {
-    fontSize: 22,
-    fontFamily: 'Lato_700Bold',
-}
-export const invHeader = {
-    flex: 1,
-    backgroundColor: '#ddd',
-    padding: 10,
-    marginBottom: 1
-}
-
-export const invText = {
-    fontSize: 18,
-    fontFamily: 'Lato_400Regular',
-    lineHeight: 32,
-}
-
-export const label = {
-    fontSize: 18,
-    fontFamily: 'Lato_400Regular',
-    lineHeight: 32,
-}
-export const orderListHeader = {
-    fontSize: 18,
-    textAlign: 'center',
-    backgroundColor: '#ddd',
-    color: '#333',
-    padding: 10,
-    marginBottom: 4
-}
-
-export const orderList = {
-    fontSize: 18,
-    backgroundColor: '#dddd',
-    borderBottomColor: '#ddd',
-    color: '#333',
-    padding: 10,
-    marginBottom: 4
-}
-
-export const orderProdList = {
-    fontSize: 18,
-    backgroundColor: '#ccc',
-    color: '#333',
-    padding: 10,
-    marginBottom: 4
-}
-
-export const bold = {
-    fontWeight: 'bold',
-    fontSize: 18,
-}
-
-export const invoiceList = {
-    fontSize: 18,
-    color: '#333',
-}
-
-export const invoiceListHeader = {
-    fontSize: 18,
-    color: '#fff',
-}
-
 export const base = {
     fontSize: 18,
-    color: "#333"
+    color: "#000",
+    padding: 16,
+}
+
+export const menuLabel = {
+    fontSize: 18,
+    fontFamily: "NotoSans-Regular"
+}
+
+export const headerText = {
+    color: "white",
+    fontSize: 22,
+    lineHeight: 24,
+    fontFamily: 'NotoSans-Regular',
+}
+
+export const contentText = {
+    color: "white",
+    fontSize: 16,
+    lineHeight: 20,
+    fontFamily: 'NotoSans-Regular',
+}
+
+export const headerIcons = {
+    color: "white",
+    fontSize: 22,
+    lineHeight: 22,
+    fontFamily: 'NotoSans-Regular',
+}
+
+export const headerTitle = {
+    position: "absolute",
+    top: 21,
+    left: 56,
+}
+export const hamburgerIcon = {
+    color: "white",
+    fontSize: 26,
+    lineHeight: 26,
+}
+
+export const hamburger = {
+    position: "absolute",
+    fontSize: 32,
+    lineHeight: 32,
+    top: 14,
+    left: 16,
+
+}
+
+export const headerButtons = {
+    position: "absolute",
+    display: "flex",
+    flexDirection: "row",
+    flexWrap: "nowrap",
+    justifyContent: "space-between",
+    gap: "20",
+    color: "white",
+    top: 17,
+    right: 7,
+    fontFamily: 'NotoSans-Regular',
+}
+
+export const headerContent = {
+    position: "absolute",
+    margin: 16,
+}
+
+export const calloutHeaderStyle = {
+    fontFamily: "NotoSans-Regular",
+    fontSize: 16,
+}
+
+export const calloutTextStyle = {
+    fontFamily: "NotoSans-Regular",
+    fontSize: 12,
+}
+
+export const pressable = {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    marginLeft: 19,
 }

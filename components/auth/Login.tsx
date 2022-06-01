@@ -5,9 +5,13 @@ import authModel from '../../models/auth.ts';
 import AuthFields from './AuthFields.tsx';
 import { showMessage } from "react-native-flash-message";
 
+// Login screen component
 export default function Login({navigation, setIsLoggedIn}) {
     const [auth, setAuth] = useState<Partial<Auth>>({});
 
+    // Try logging in, if success, set isLoggedIn=true,
+    // otherwise showmessage. If one or the other is missing
+    // show corresponding msg.
     async function doLogin() {
         if (auth.email && auth.password) {
             const result = await authModel.login(auth.email, auth.password);
@@ -30,6 +34,7 @@ export default function Login({navigation, setIsLoggedIn}) {
         }
     }
 
+    // Return authfield component with props
     return (
         <AuthFields
             auth={auth}

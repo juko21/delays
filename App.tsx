@@ -1,153 +1,187 @@
-import { useState, useEffect, useCallback } from 'react';
+import 'react-native-gesture-handler';
+import { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FlashMessage from 'react-native-flash-message';
-import AppLoading from 'expo-app-loading';
-import { useFonts, Lato_300Light, Lato_300Light_Italic, Lato_400Regular, Lato_400Regular_Italic, Lato_700Bold, Lato_700Bold_Italic } from '@expo-google-fonts/lato';
-import Home from "./components/Home.tsx";
 import Map from "./components/Map.tsx";
-import DelaysList from "./components/DelaysList.tsx";
-import Delays from "./components/DelaysList.tsx";
+import Delays from "./components/Delays.tsx";
 import * as Font from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-
 import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { View, Text, Pressable } from 'react-native';
+import { createDrawerNavigator, DrawerItemList } from '@react-navigation/drawer';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import { Base } from './styles/index.js';
+import { Base, Typography, DrawerStyle } from './styles/index.js';
 import Auth from "./components/auth/Auth.tsx";
 import Logout from "./components/auth/Logout.tsx";
-import Favourites from "./components/Favourites.tsx";
 
-const Tab = createBottomTabNavigator();
+//Drawer nested in stack navigator
+//In order to access navigation.push, for navigating to same screen
+const Drawer = createDrawerNavigator();
+const Stack = createNativeStackNavigator();
+
+//Route icons for menu options
 const routeIcons = {
-    "Karta": "navigate-circle-outline",
-    "Sök": "search-outline",
+    "Sök på karta": "navigate-circle-outline",
+    "Sök station": "search-outline",
     "Favoriter": "star-outline",
     "Logga in": "log-in-outline",
     "Logga ut": "log-out-outline"
 };
 
 export default function App() {
-    const [currentGPSLocation, setCurrentGPSLocation] = useState<Partial<LocationCoords>>({});
     const [isLoggedIn, setIsLoggedIn] = useState<Boolean>(false);
-    const [favourites, setFavourites] = useState([]);
+    const [favourites, setFavourites] = useState(null);
+    const [delays, setDelays] = useState(null);
+    const [stations, setStations] = useState(null);
     const [appIsReady, setAppIsReady] = useState(false);
 
+    //Define font path
     const fonts = {
-        'Rubik-Light': require('./assets/fonts/Rubik-Light.ttf'),
-        'Rubik-Regular': require('./assets/fonts/Rubik-Regular.ttf'),
-        'Rubik-Medium': require('./assets/fonts/Rubik-Medium.ttf'),
-        'Rubik-Bold': require('./assets/fonts/Rubik-Bold.ttf'),
-        'Rubik-SemiBold': require('./assets/fonts/Rubik-SemiBold.ttf'),
-        'Rubik-Italic': require('./assets/fonts/Rubik-Italic.ttf'),
-        'Rubik-LightItalic': require('./assets/fonts/Rubik-LightItalic.ttf'),
-        'Rubik-BolItalic': require('./assets/fonts/Rubik-BoldItalic.ttf'),
+        'NotoSans-Regular': require('./assets/fonts/NotoSans-Regular.ttf'),
     };
-    /*
-    const [appIsReady, setAppIsReady] = useState(false);
 
-    useEffect(() => {
-    (async () => {
-        try {
-        await SplashScreen.preventAutoHideAsync();
-        await Font.loadAsync({ fonts });
-        }
-        catch {
-        // handle error
-        }
-        finally {
-        setAppIsReady(true);
-        }
-    })();
-    }, []);
-
-    const onLayout = useCallback(() => {
-    if (appIsReady) {
-        SplashScreen.hideAsync();
-    }
-    }, [appIsReady]);
-
-    if (!appIsReady) {
-    return null;
-    }*/
-
+    //Preload font and show splashscreeen until finished
     useEffect(() => {
         (async () => {
         try {
-        // Keep the splash screen visible while we fetch resources
         await SplashScreen.preventAutoHideAsync();
-        // Pre-load fonts, make any API calls you need to do here
         await Font.loadAsync(fonts);
-        console.log("waiting");
         } catch (e) {
         console.warn(e);
         } finally {
-        // Tell the application to render
         setAppIsReady(true);
-        await SplashScreen.hideAsync();
         }
         })();
     }, []);
 
+    //Hide splashscreen when app is ready loaded
     useEffect(() => {
         (async () => {
             if (appIsReady) {
-                // This tells the splash screen to hide immediately! If we call this after
-                // `setAppIsReady`, then we may see a blank screen while the app is
-                // loading its initial state and rendering its first pixels. So instead,
-                // we hide the splash screen once we know the root view has already
-                // performed layout.
-                console.log("waiting?");
-        
                 await SplashScreen.hideAsync();
             }
         })();
     }, [appIsReady]);
 
+    //If app is not ready, return null
     if (!appIsReady) {
         return null;
     }
 
+    // Returning Stack navigator, in which drawer navigator is nested
+    // This is so that favourites in drawer menu can be accessed through
+    // navigation push, even when on the same screen (screen: "search")
     return (
         <SafeAreaView style={Base.container}>
-            <NavigationContainer>
-                <Tab.Navigator initialRouteName="Karta" screenOptions={({ route, navigation }) => ({
-                tabBarIcon: ({ focused, color, size }) => {
-                let iconName = routeIcons[route.name] || "alert";
-
-                return <Ionicons name={iconName} size={size} color={color} />;
-                },
-                tabBarActiveTintColor: 'blue',
-                tabBarInactiveTintColor: 'gray',
-                
-                headerShown: false
-                })}
-                >
-                    <Tab.Screen name="Karta">
-                    {(screenProps) => <Map {...screenProps} currentGPSLocation={currentGPSLocation} setCurrentGPSLocation={setCurrentGPSLocation} />}
-                    </Tab.Screen>
-                    <Tab.Screen name="Sök">
-                    {(screenProps) => <Delays {...screenProps} isLoggedIn={isLoggedIn} favourites={favourites} setFavourites={setFavourites}/>}
-                    </Tab.Screen>
-                    {isLoggedIn ?
-                        <Tab.Screen name="Favoriter">
-                        {(screenProps) => <Favourites {...screenProps} setIsLoggedIn={isLoggedIn} favourites={favourites} setFavourites={setFavourites}/>}
-                        </Tab.Screen>
-                        :
-                        <Tab.Screen name="Logga in">
-                            {(screenProps) => <Auth {...screenProps} setIsLoggedIn={setIsLoggedIn} />}
-                        </Tab.Screen>
-                    }
-                    {isLoggedIn &&
-                        <Tab.Screen name="Logga ut">
-                            {(screenProps) => <Logout {...screenProps} setIsLoggedIn={setIsLoggedIn} />}
-                        </Tab.Screen>
-                    }                
-                </Tab.Navigator>
+            <NavigationContainer initialRouteName="Drawer">
+                <Stack.Navigator   
+                    screenOptions={{headerShown: false}}
+                    initialRouteName='Drawer'>
+                        <Stack.Screen name="Drawer">
+                        {(screenProps) => <DrawerNavigation 
+                            {...screenProps}
+                            options={{headerShown: false}}
+                            stations={stations}
+                            setStations={setStations}
+                            delays={delays}
+                            setDelays={setDelays}
+                            favourites={favourites}
+                            setFavourites={setFavourites}
+                            isLoggedIn={isLoggedIn}
+                            setIsLoggedIn={setIsLoggedIn}
+                        />}
+                    </Stack.Screen>
+                </Stack.Navigator>
             </NavigationContainer>
             <StatusBar style="auto" />
             <FlashMessage position="top" />
         </SafeAreaView>
     );
 }
+
+// Custom drawer for drawer nav, including header and navigation links
+// to favourites if logged in. (Done through navigation.push)
+const CustomDrawer = props => {
+
+    // If logged in and there are favourites - generate menu
+    // with links to search-screen with favorite station as param
+    if (props.isLoggedIn && props.favourites !== null) {
+        favouriteLabels = props.favourites.map((fav, index) => {
+            return (
+                <Pressable 
+                    key={index}
+                    onPress={()=>{
+                        props.navigation.push('Search', { passedStation: fav.artefact});
+                        props.navigation.closeDrawer();
+                    }}
+                    >
+                    <Text style={ DrawerStyle.drawerFavouriteText }>
+                        <Ionicons 
+                            style={Typography.drawerFavouriteText}
+                            name="star"
+                        />
+                        {"  " + fav.artefact.AdvertisedLocationName}
+                    </Text>
+                </Pressable>
+                );
+        });
+    }
+
+    //Return custom drawer
+    return (
+        <View>
+            <View style={ DrawerStyle.drawerHeader } {...props}>
+                <Text style={ DrawerStyle.drawerHeaderText }>Försenat?</Text>
+            </View>
+            <DrawerItemList {...props} />
+            <View style={ DrawerStyle.favouriteList }>
+                <Text style={ DrawerStyle.drawerFavouriteHeader }>Favoriter</Text>
+                {favouriteLabels}
+            </View>
+        </View>
+    );
+};
+
+
+// Drawer navigation - main navigation of the app, but due to the need to
+// use navigation.push - the menu needs to be nested in a stack navigator and
+// is thus defined as separate component.
+const DrawerNavigation = (props) => {
+    let favourites = props.favourites;
+    let isLoggedIn = props.isLoggedIn;
+    return (
+        <Drawer.Navigator 
+            screenOptions={({ route }) => ({
+                headerShown: true,
+                drawerIcon: ({ focused, color, size }) => {
+                let iconName = routeIcons[route.name] || "alert";
+
+                return <Ionicons style={DrawerStyle.drawerScreenStyle} name={iconName} color={color} />;
+                },
+                drawerActiveTintColor: '#D57C7A',
+                drawerInactiveTintColor: '#000000',
+                headerShown: false,
+                drawerLabelStyle: DrawerStyle.drawerScreenStyle,
+            })}
+            drawerContent={props => <CustomDrawer {...props} isLoggedIn={isLoggedIn} favourites={favourites} />}
+        >
+            <Drawer.Screen name="Sök på karta">
+                {(screenProps) => <Map {...screenProps} stations={props.stations} setStations={props.setStations} delays={props.delays} setDelays={props.setDelays} favourites={props.favourites} setFavourites={props.setFavourites} isLoggedIn={props.isLoggedIn} />}
+            </Drawer.Screen>
+            <Drawer.Screen key="stationSearch" name="Sök station">
+                {(screenProps) => <Delays {...screenProps} stations={props.stations} setStations={props.setStations} delays={props.delays} setDelays={props.setDelays} favourites={props.favourites} setFavourites={props.setFavourites} isLoggedIn={props.isLoggedIn} />}
+            </Drawer.Screen>
+            {props.isLoggedIn ?
+                <Drawer.Screen name="Logga ut">
+                    {(screenProps) => <Logout {...screenProps} setIsLoggedIn={props.setIsLoggedIn} />}
+                </Drawer.Screen>
+                :
+                <Drawer.Screen name="Logga in">
+                    {(screenProps) => <Auth {...screenProps} setIsLoggedIn={props.setIsLoggedIn} />}
+                </Drawer.Screen>
+            }
+        </Drawer.Navigator>
+    )
+};
