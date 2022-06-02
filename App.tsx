@@ -104,7 +104,7 @@ export default function App() {
 // Custom drawer for drawer nav, including header and navigation links
 // to favourites if logged in. (Done through navigation.push)
 const CustomDrawer = props => {
-
+    favouriteLabels = null;
     // If logged in and there are favourites - generate menu
     // with links to search-screen with favorite station as param
     if (props.isLoggedIn && props.favourites !== null) {

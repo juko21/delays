@@ -14,8 +14,7 @@ import { showMessage } from "react-native-flash-message";
 import { Ionicons } from '@expo/vector-icons';
 import DoubleHeader from './DoubleHeader.tsx';
 import FavouriteModel from '../models/favourites.ts';
-let firstRender = true;
-
+import formatDates from '../models/formatDates';
 export default function Map({
     route,
     navigation,
@@ -290,8 +289,8 @@ export default function Map({
                     
                     // Set content for callout
                     calloutContent += "\nTåg till " + arrival[0].AdvertisedLocationName;
-                    calloutContent += "\nAvgång kl: " + adTime.toLocaleString('sv-SE', options);
-                    calloutContent += "\nNy beräknad avgångstid: " + estTime.toLocaleString('sv-SE', options) +"\n";
+                    calloutContent += "\nAvgång kl: " + formattedDates.adTimeStr;
+                    calloutContent += "\nNy beräknad avgångstid: " + formattedDates.estTimeStr +"\n";
                 });
                 // Create marker for cur. station
                 return <Marker
