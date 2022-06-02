@@ -1,5 +1,5 @@
 import 'react-native-gesture-handler';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FlashMessage from 'react-native-flash-message';
@@ -7,7 +7,7 @@ import Map from "./components/Map.tsx";
 import Delays from "./components/Delays.tsx";
 import * as Font from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
 import { View, Text, Pressable } from 'react-native';
 import { createDrawerNavigator, DrawerItemList } from '@react-navigation/drawer';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -36,12 +36,12 @@ export default function App() {
     const [delays, setDelays] = useState(null);
     const [stations, setStations] = useState(null);
     const [appIsReady, setAppIsReady] = useState(false);
-
+    const navigationRef = useNavigationContainerRef();
+    
     //Define font path
     const fonts = {
         'NotoSans-Regular': require('./assets/fonts/NotoSans-Regular.ttf'),
     };
-
     //Preload font and show splashscreeen until finished
     useEffect(() => {
         (async () => {
@@ -73,9 +73,13 @@ export default function App() {
     // Returning Stack navigator, in which drawer navigator is nested
     // This is so that favourites in drawer menu can be accessed through
     // navigation push, even when on the same screen (screen: "search")
+
     return (
         <SafeAreaView style={Base.container}>
-            <NavigationContainer initialRouteName="Drawer">
+            <NavigationContainer
+                initialRouteName="Drawer"
+                ref={navigationRef}
+            >
                 <Stack.Navigator   
                     screenOptions={{headerShown: false}}
                     initialRouteName='Drawer'>
@@ -90,6 +94,7 @@ export default function App() {
                             favourites={favourites}
                             setFavourites={setFavourites}
                             isLoggedIn={isLoggedIn}
+                            navigationRef={navigationRef}
                             setIsLoggedIn={setIsLoggedIn}
                         />}
                     </Stack.Screen>
@@ -103,7 +108,7 @@ export default function App() {
 
 // Custom drawer for drawer nav, including header and navigation links
 // to favourites if logged in. (Done through navigation.push)
-const CustomDrawer = props => {
+const CustomDrawer = (props) => {
     favouriteLabels = null;
     // If logged in and there are favourites - generate menu
     // with links to search-screen with favorite station as param
@@ -113,8 +118,13 @@ const CustomDrawer = props => {
                 <Pressable 
                     key={index}
                     onPress={()=>{
-                        props.navigation.push('Search', { passedStation: fav.artefact});
-                        props.navigation.closeDrawer();
+                        if(props.navigationRef.getCurrentRoute().name === 'Search') {
+                            props.navigation.push('Search', { passedStation: fav.artefact});
+                            props.navigation.closeDrawer();
+                        } else {
+                            props.navigation.navigate('Search', { passedStation: fav.artefact});
+                            props.navigation.closeDrawer();
+                        }
                     }}
                     >
                     <Text style={ DrawerStyle.drawerFavouriteText }>
@@ -151,6 +161,7 @@ const CustomDrawer = props => {
 const DrawerNavigation = (props) => {
     let favourites = props.favourites;
     let isLoggedIn = props.isLoggedIn;
+    const navRef = props.navigationRef
     return (
         <Drawer.Navigator 
             screenOptions={({ route }) => ({
@@ -165,7 +176,7 @@ const DrawerNavigation = (props) => {
                 headerShown: false,
                 drawerLabelStyle: DrawerStyle.drawerScreenStyle,
             })}
-            drawerContent={props => <CustomDrawer {...props} isLoggedIn={isLoggedIn} favourites={favourites} />}
+            drawerContent={props => <CustomDrawer {...props} navigationRef={navRef} isLoggedIn={isLoggedIn} favourites={favourites} />}
         >
             <Drawer.Screen name="Sök på karta">
                 {(screenProps) => <Map {...screenProps} stations={props.stations} setStations={props.setStations} delays={props.delays} setDelays={props.setDelays} favourites={props.favourites} setFavourites={props.setFavourites} isLoggedIn={props.isLoggedIn} />}
