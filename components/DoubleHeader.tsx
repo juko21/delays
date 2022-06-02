@@ -35,7 +35,7 @@ export default function DoubleHeader({ title, inputRef, search, reload, navigati
                     }}>
                     <Ionicons style={Typography.headerIcons} name="refresh-outline"/>
                     </Pressable>
-                    { userLocation ?
+                    { userLocation !== null ?
                         (<Pressable
                             title="Gå till användarens plats"
                             style={Typography.pressable}
@@ -45,7 +45,7 @@ export default function DoubleHeader({ title, inputRef, search, reload, navigati
                         <Ionicons style={Typography.headerIcons} name="locate-outline"/>
                         </Pressable>)
                         :
-                        ""
+                        null
                     }
                 </View>
             </View>

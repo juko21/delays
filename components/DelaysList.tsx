@@ -81,6 +81,14 @@ export default function DelaysList({
         })();
     }, [currentStation, favourites] );
 
+    useEffect(() => {
+        (async () => {
+            if(!isLoggedIn) {
+                setAddToFavoritesButton(null);
+            }
+        })();
+    }, [isLoggedIn] );
+
     // Reload delays and favourites
     async function reload() {
         reloadDelays();
@@ -225,7 +233,7 @@ export default function DelaysList({
                 reload={reload}
                 inputRef={inputRef}
                 favoriteButton={addToFavoritesButton}
-                userLocation={null}
+                userLocation={null}x
                 textChange={(content) => {
                     setSearchLocation(content);
                     getMatches(content, true);

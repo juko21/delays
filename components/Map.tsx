@@ -100,6 +100,14 @@ export default function Map({
         })();
     }, [currentStation, delays, favourites] );
 
+    useEffect(() => {
+        (async () => {
+            if(!isLoggedIn) {
+                setAddToFavoritesButton(null);
+            }
+        })();
+    }, [isLoggedIn] );
+
     // Animate region to marker (current location) coords
     function goToMarker() {
         if (currentLocation){
