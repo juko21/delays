@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import DoubleHeader from './DoubleHeader.tsx';
 import FavouriteModel from '../models/favourites.ts';
 import formatDates from '../models/formatDates';
+
 export default function Map({
     route,
     navigation,
@@ -323,6 +324,7 @@ export default function Map({
                 reload={reload}
                 inputRef={inputRef}
                 favoriteButton={addToFavoritesButton}
+                userLocation={setCurrentLocationToUser}
                 textChange={(content) => {
                     setSearchLocation(content);
                     getMatches(content, true);

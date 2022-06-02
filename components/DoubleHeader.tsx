@@ -3,7 +3,8 @@ import { View, Text, Pressable, TextInput } from "react-native";
 import { Typography, Base } from '../styles/index.js';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function DoubleHeader({ title, inputRef, search, reload, navigation, textChange, favoriteButton}) {
+// Double row header component for search screens
+export default function DoubleHeader({ title, inputRef, search, reload, navigation, textChange, favoriteButton, userLocation}) {
     return (
         <View style={Base.header}>
             <View style={Base.headerRow}>
@@ -17,23 +18,35 @@ export default function DoubleHeader({ title, inputRef, search, reload, navigati
                 </Pressable>
                 <Text style={[ Typography.headerTitle, Typography.headerText ]}>{ title }</Text>
                 <View style={Typography.headerButtons}>
-                <Pressable
-                    title="Sök"
-                    style={Typography.pressable}
-                    onPress={() => {
-                        search();
-                }}>
-                <Ionicons style={Typography.headerIcons} name="search-outline"/>
-                </Pressable>
-                {favoriteButton}
-                <Pressable
-                    title="Uppdatera"
-                    style={Typography.pressable}
-                    onPress={() => {
-                        reload();
-                }}>
-                <Ionicons style={Typography.headerIcons} name="refresh-outline"/>
-                </Pressable>
+                    <Pressable
+                        title="Sök"
+                        style={Typography.pressable}
+                        onPress={() => {
+                            search();
+                    }}>
+                    <Ionicons style={Typography.headerIcons} name="search-outline"/>
+                    </Pressable>
+                    {favoriteButton}
+                    <Pressable
+                        title="Uppdatera"
+                        style={Typography.pressable}
+                        onPress={() => {
+                            reload();
+                    }}>
+                    <Ionicons style={Typography.headerIcons} name="refresh-outline"/>
+                    </Pressable>
+                    { userLocation ?
+                        (<Pressable
+                            title="Gå till användarens plats"
+                            style={Typography.pressable}
+                            onPress={() => {
+                                userLocation();
+                        }}>
+                        <Ionicons style={Typography.headerIcons} name="locate-outline"/>
+                        </Pressable>)
+                        :
+                        ""
+                    }
                 </View>
             </View>
             <View style={Base.headerRow2nd}>
