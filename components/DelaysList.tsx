@@ -225,6 +225,7 @@ export default function DelaysList({
                 reload={reload}
                 inputRef={inputRef}
                 favoriteButton={addToFavoritesButton}
+                userLocation={null}
                 textChange={(content) => {
                     setSearchLocation(content);
                     getMatches(content, true);
